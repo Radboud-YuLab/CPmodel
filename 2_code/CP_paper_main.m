@@ -197,7 +197,7 @@ close all
 clear
 
 load('4_processed_data\uhl_main\uhl_main.mat')
-timeCutoff = 2.2;
+timeCutoff = 2;
 predTime = [1 2 4];
 pred_exp = predUhlitzCYHX(out_opt, predTime, timeCutoff);
 
