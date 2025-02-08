@@ -14,8 +14,7 @@ function [cluster] = findCluster(desired_cluster, out_opt, cluster_list)
 %                   col 4: RSS
 %                   col 5: nCP-penalized RSS
 %                   col 6: R squared
-% cluster_list      the list of clusters assigned to each gene according to
-%                   GO term analysis by Pommerenke 2012. 
+% cluster_list      the list of clusters assigned to each gene. 
 %
 % Chen Chen. Last update: 2024-09-11
 

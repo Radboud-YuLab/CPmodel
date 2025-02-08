@@ -66,7 +66,7 @@ for i = 1:height (gene)
 end
 end
 
-
+% local
 function P = graph_points(n, cp)
     % generate points from CPs for graphing
     % n = number of CPs

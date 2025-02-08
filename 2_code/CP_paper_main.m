@@ -3,8 +3,8 @@
 % The folders 1_raw_data and 2_code must already exist with the appropriate files.
 % Other folders and files will be written (or over-written) by the script.
 
-% Chen Chen. Last update: 2024-09-16
-% Rosemary Yu. Last update: 2024-09-25
+% Chen Chen. Last update: 2024-02-05
+% Rosemary Yu. Last update: 2025-02-08
 
 %% Pommerenke 2012 dataset, viral infection-induced immune response
 close all
@@ -192,14 +192,14 @@ drawDensityIntCPs(SRG_cluster, uhl_hrs, 1, 0.2, '6_results\uhl_main', 'clusterSR
 drawDensityIntCPs(IEG_cluster, uhl_hrs, 1, 0.2, '6_results\uhl_main', 'clusterIEG');
 
 
-%% predict the response of interrupting a state transition
+%% predict Uhlitz CYHX
 close all
 clear
 
 load('4_processed_data\uhl_main\uhl_main.mat')
 timeCutoff = 2;
 predTime = [1 2 4];
-pred_exp = predUhlitzCYHX(out_opt, predTime, timeCutoff);
+pred_exp = predInterruptProcess(out_opt, predTime, timeCutoff);
 
 %calculate R2
 [~, CYHX_log2fc, ~] = readUhlitzCYHX;
@@ -226,7 +226,109 @@ cd (currentPath)
 
 T = table(out_opt(:,1), pred_exp(:,1), pred_exp(:,2), pred_exp(:,3), ...
     'VariableNames', {'SYMBOL', 'T1h_CYHX', 'T2h_CYHX', 'T4h_CYHX'});
+T = rmmissing(T);
 writetable(T, '6_results\uhl_main\CHYX_predictions.csv')
+
+
+%% Qu 2018 dataset, keratinocyte differentiation
+
+close all
+clear
+
+% read in the Qu 2018 keratinocyte differentiation dataset
+qu_days = [0,1,2,3,4,5,6,7];
+[qu_genes, expr_wt, ~] = readQu;
+
+% tune/set data-specific parameters 
+data = expr_wt; 
+time_points = qu_days;
+gene_names = qu_genes;
+linCutoff = 0.95;
+lambda = 6;
+R2Cutoff = 0.75; 
+
+% set up output structures
+out_all = struct();
+out_opt = {};
+
+% fit CP model for each gene
+tic
+
+for g = 1:length(data)
+    gene = gene_names(g);
+    tp = time_points;
+    exp = data(g, :);
+    
+    % bootstrapping is not done in this series since it is evenly spaced
+    exp = transpose (cat (1, tp, exp));
+
+    % get CPs
+    maxnCP = floor((length(tp)-2)/3)+2;
+    output = getCPs(exp, maxnCP, linCutoff, lambda);
+    
+    % optional: to save graphics (note that run time will be much longer)
+    %graphPath = '4_processed_data\qu_getCPs_graphOutput';
+    %output = getCPs(BS, maxnCP, linCutoff, lambda, graphPath, gene, g, gdata);
+    
+    % get optimal number of CPs using R2Cutoff
+    [gAll, gOpt] = getOptCP(gene, exp, output, 3, R2Cutoff);
+    out_opt(g,1:6) = gOpt;
+        
+    % grab all data
+    out_all(g).gene = gene;
+    out_all(g).n_CPs = cell2mat(gAll(:,2));
+    out_all(g).CP_coordinates = gAll(:,3);
+    out_all(g).RSS = cell2mat(gAll(:,4));
+    out_all(g).nCP_penalized_RSS = cell2mat(gAll(:,5));
+    out_all(g).R2 = cell2mat(gAll(:,6));
+    
+end
+
+toc
+
+% draw & save kernel density graph
+drawDensityIntCPs(out_opt, qu_days, 1, 0.1, '6_results\qu_main')
+
+% write output as csv
+[nCP,CPloc] = writeOptCP(out_opt, '6_results\qu_main');
+
+% Pull out genes for GO term analysis
+[peak1] = findState([1.9 2.9],'1', out_opt, qu_days, '6_results\qu_main');
+[peak2] = findState([3.2 3.8],'2', out_opt, qu_days, '6_results\qu_main');
+[peak3] = findState([4.2 4.9],'3', out_opt, qu_days, '6_results\qu_main');
+
+% save outputs as a matlab object
+currentPath = pwd;
+mkdir('4_processed_data\qu_main')
+cd('4_processed_data\qu_main')
+save('qu_main.mat', 'out_all', 'out_opt', 'qu_days', 'expr_wt', 'peak1', 'peak2', 'peak3');
+cd (currentPath)
+
+
+%% predict Qu EEC syndrome
+close all
+clear
+
+load('4_processed_data\qu_main\qu_main.mat');
+[~, ~, expr_EEC] = readQu;
+
+timeCutoff = [1.7, 3.1, 4.1];
+predTime = 7;
+pred_exp_1 = predInterruptProcess(out_opt, predTime, timeCutoff(1));
+pred_exp_2 = predInterruptProcess(out_opt, predTime, timeCutoff(2));
+pred_exp_3 = predInterruptProcess(out_opt, predTime, timeCutoff(3));
+pred_exp = [pred_exp_1 pred_exp_2 pred_exp_3];
+
+% save files
+currentPath = pwd;
+cd('4_processed_data\qu_main')
+save('qu_pred_EEC.mat', 'pred_exp', 'predTime', 'expr_EEC');
+cd (currentPath)
+
+T = table(out_opt(:,1), pred_exp(:,1), pred_exp(:,2), pred_exp(:,3), ...
+    'VariableNames', {'gene', 'k1', 'k2', 'k3'});
+T = rmmissing(T);
+writetable(T, '6_results\qu_main\EEC_predictions.csv')
 
 
 %% draw figures
@@ -234,6 +336,6 @@ close all
 clear
 
 mkdir('6_results\figures')
-[Figure1d,Figure2a,Figure2b,Figure3] = drawFigures;
+[Fig1d, Fig2a, Fig2b, Fig3, Fig4a, Fig4b] = drawFigures;
 
 disp('all done')
