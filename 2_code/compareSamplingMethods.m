@@ -19,6 +19,9 @@ x = 0:5;
 y = [0 0 1 0 0 0]; 
 drawComparisons(x,y)
 
+set(fig,'Position',[10 10 1000 300])
+saveas(fig,'6_results\compareSamplingMethods\demo.png')
+
 
 % local
 function drawComparisons(x, y)
