@@ -1,6 +1,6 @@
 % two demo cases comparing our weighted bootstrap method, spline
 % interpolation, and Gaussian process (GP) regression.
-% Rosemary Yu. Last update: 2025-01-31
+% Rosemary Yu. Last update: 2025-02-11
 
 clear 
 clc
