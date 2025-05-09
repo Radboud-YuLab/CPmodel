@@ -6,3 +6,7 @@ Plasticity is the potential for cells or cell populations to change their phenot
 
 ## Getting started
 To get started, navigate to `2_code` and run `CP_model_main.m`.
+
+## Cite us:
+If you have used the CP model in your work, please cite:
+> Chen CM, Yu R. A multi-step completion process model of cell plasticity. *Briefings in Bioinformatics*. 2025 Mar 4;26(2):bbaf165. DOI: [10.1093/bib/bbaf165](https://doi.org/10.1093/bib/bbaf165)
